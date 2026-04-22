@@ -8,8 +8,48 @@ from os.path import basename, abspath
 from copy import deepcopy
 from textwrap import dedent as d
 import bezier_cubic
-from settings import *
 import subprocess
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+STROKE_BORDER_WIDTH = float(os.environ["STROKE_BORDER_WIDTH"])
+STROKE_BORDER_COLOR = os.environ["STROKE_BORDER_COLOR"]
+STROKE_UNFILLED_COLOR = os.environ["STROKE_UNFILLED_COLOR"]
+STROKE_UNFILLED_WIDTH = float(os.environ["STROKE_UNFILLED_WIDTH"])
+STROKE_FILLING_COLOR = os.environ["STROKE_FILLING_COLOR"]
+STROKE_FILLED_COLOR = os.environ["STROKE_FILLED_COLOR"]
+STROKE_FILLED_WIDTH = float(os.environ["STROKE_FILLED_WIDTH"])
+
+SHOW_BRUSH = bool(os.environ["SHOW_BRUSH"])
+SHOW_BRUSH_FRONT_BORDER = bool(os.environ["SHOW_BRUSH_FRONT_BORDER"])
+BRUSH_COLOR = os.environ["BRUSH_COLOR"]
+BRUSH_WIDTH = float(os.environ["BRUSH_WIDTH"])
+BRUSH_BORDER_COLOR = os.environ["BRUSH_BORDER_COLOR"]
+BRUSH_BORDER_WIDTH = float(os.environ["BRUSH_BORDER_WIDTH"])
+
+WAIT_AFTER = float(os.environ["WAIT_AFTER"])
+
+DELETE_TEMPORARY_FILES = bool(os.environ["DELETE_TEMPORARY_FILES"])
+GIF_SIZE = int(os.environ["GIF_SIZE"])
+GIF_FRAME_DURATION = float(os.environ["GIF_FRAME_DURATION"])
+GIF_BACKGROUND_COLOR = os.environ["GIF_BACKGROUND_COLOR"]
+GIF_ALLOW_TRANSPARENT = bool(os.environ["GIF_ALLOW_TRANSPARENT"])
+
+GENERATE_SVG = bool(os.environ["GENERATE_SVG"])
+GENERATE_JS_SVG = bool(os.environ["GENERATE_JS_SVG"])
+GENERATE_GIF = bool(os.environ["GENERATE_GIF"])
+
+STROKE_LENGTH_TO_DURATION = compile(os.environ["STROKE_LENGTH_TO_DURATION"], "<string>", "eval")
+def stroke_length_to_duration(length):
+    return eval(STROKE_LENGTH_TO_DURATION, { "length": length })
+
+TIME_RESCALE = compile(os.environ["TIME_RESCALE"], "<string>", "eval")
+def time_rescale(interval):
+    return eval(TIME_RESCALE, { "interval": interval })
+
+TIMING_FUNCTION = os.environ["TIMING_FUNCTION"]
 
 
 def run(cmdline):
@@ -105,7 +145,7 @@ def create_animation(filename):
             "fill:none;stroke:%s;stroke-width:%f;"
             + "stroke-linecap:round;stroke-linejoin:round;"
         )
-        % (STOKE_UNFILLED_COLOR, STOKE_UNFILLED_WIDTH),
+        % (STROKE_UNFILLED_COLOR, STROKE_UNFILLED_WIDTH),
     )
     anim_g = E.g(
         id="kvg:" + baseid + "-anim-Kanimaji",
@@ -113,7 +153,7 @@ def create_animation(filename):
             "fill:none;stroke:%s;stroke-width:%f;"
             + "stroke-linecap:round;stroke-linejoin:round;"
         )
-        % (STOKE_FILLED_COLOR, STOKE_FILLED_WIDTH),
+        % (STROKE_FILLED_COLOR, STROKE_FILLED_WIDTH),
     )
     if SHOW_BRUSH:
         brush_g = E.g(
@@ -206,7 +246,7 @@ def create_animation(filename):
                 stroke-width: %.01fpx !important;
                 stroke:       %s !important;
             }"""
-            % (gidcss, STOKE_BORDER_WIDTH, STOKE_BORDER_COLOR)
+            % (gidcss, STROKE_BORDER_WIDTH, STROKE_BORDER_COLOR)
         )
         if GENERATE_SVG:
             assert animated_css
@@ -290,7 +330,7 @@ def create_animation(filename):
                         %.03f%% { visibility: hidden; }
                         %.03f%% { stroke: %s; }
                     }"""
-                    % (pathname, anim_start, anim_end, STOKE_FILLING_COLOR)
+                    % (pathname, anim_start, anim_end, STROKE_FILLING_COLOR)
                 )
 
                 # animation progression
@@ -409,7 +449,7 @@ def create_animation(filename):
                     }"""
                     % (
                         anim_pathidcss,
-                        STOKE_FILLING_COLOR,
+                        STROKE_FILLING_COLOR,
                         pathlen,
                         pathlen,
                         pathname,
@@ -503,7 +543,7 @@ def create_animation(filename):
                                 pathlen,
                                 pathlen + 0.002,
                                 pathlen * (1 - progression) + 0.0015,
-                                STOKE_FILLING_COLOR,
+                                STROKE_FILLING_COLOR,
                             )
                         )
                         if SHOW_BRUSH:

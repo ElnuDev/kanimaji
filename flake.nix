@@ -19,6 +19,7 @@
     deps = [ pkgs."${python}" ] ++ (with pythonPackages; [
       lxml
       svg-path
+      python-dotenv
     ]);
   in {
     devShells."${system}".default = pkgs.mkShell {
