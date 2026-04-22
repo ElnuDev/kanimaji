@@ -15,12 +15,16 @@
       inherit system;
     };
     python = "python314";
+    pythonPackages = pkgs."${python}Packages";
+    deps = [ pkgs."${python}" ] ++ (with pythonPackages; [
+      lxml
+      svg-path
+    ]);
   in {
-    devShells.x86_64-linux.default = pkgs.mkShell {
-      packages = [ pkgs."${python}" ] ++ (with pkgs."${python}Packages"; [
-        lxml
-        types-lxml
-        svg-path
+    devShells."${system}".default = pkgs.mkShell {
+      packages = deps ++ (with pythonPackages; [
+        types-lxml # lxml type hints
+        black # formatting
       ]);
     };
   };
