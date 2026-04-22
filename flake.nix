@@ -19,6 +19,7 @@
     devShells.x86_64-linux.default = pkgs.mkShell {
       packages = [ pkgs."${python}" ] ++ (with pkgs."${python}Packages"; [
         lxml
+        types-lxml
         svg-path
       ]);
     };

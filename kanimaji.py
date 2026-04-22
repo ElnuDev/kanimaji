@@ -1,7 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# pyright: reportPossiblyUnboundVariable=warning
 
-import re, math, glob, os, sys, json
+import re, os, sys, json
 from lxml import etree
 from lxml.builder import E
 from svg.path import parse_path
@@ -10,7 +9,13 @@ from copy import deepcopy
 from textwrap import dedent as d
 import bezier_cubic
 from settings import *
+import subprocess
 
+
+def run(cmdline):
+    print(cmdline)
+    if subprocess.run(cmdline, shell=True).returncode != 0:
+        exit('Error running external command')
 
 def compute_path_len(path):
     return parse_path(path).length(error=1e-8)
@@ -55,7 +60,7 @@ timing_funcs = {
 }
 
 if not TIMING_FUNCTION in timing_funcs:
-    exit('Sorry, invalid timing function "%s"', TIMING_FUNCTION)
+    exit(f'Sorry, invalid timing function "{TIMING_FUNCTION}"')
 my_timing_func = timing_funcs[TIMING_FUNCTION]
 
 # we will need this to deal with svg
@@ -78,7 +83,7 @@ def create_animation(filename):
 
     #clear all extra elements this program may have previously added
     for el in doc.xpath("/n:svg/n:style", namespaces=namespaces):
-        if re.match( r'-Kanimaji$', g.get('id') ):
+        if re.match( r'-Kanimaji$', el.get('id') ):
             doc.getroot().remove(el)
     for g in doc.xpath("/n:svg/n:g", namespaces=namespaces):
         if re.match( r'-Kanimaji$', g.get('id') ):
@@ -152,8 +157,10 @@ def create_animation(filename):
                     display: none;
                 }""" % re.sub(r':', '\\\\3a ', groupid))
             if GENERATE_SVG:
+                assert animated_css
                 animated_css += rule
             if GENERATE_JS_SVG:
+                assert js_animated_css
                 js_animated_css += rule
             if GENERATE_GIF:
                 for k in static_css: static_css[k] += rule
@@ -166,8 +173,10 @@ def create_animation(filename):
                 stroke:       %s !important;
             }""" % (gidcss, STOKE_BORDER_WIDTH, STOKE_BORDER_COLOR))
         if GENERATE_SVG:
+            assert animated_css
             animated_css += rule
         if GENERATE_JS_SVG:
+            assert js_animated_css
             js_animated_css += rule
         if GENERATE_GIF:
             for k in static_css: static_css[k] += rule
@@ -225,6 +234,7 @@ def create_animation(filename):
 
             if GENERATE_SVG:
                 # animation stroke progression
+                assert animated_css
                 animated_css += d("""
                     @keyframes strike-%s {
                         0%% { stroke-dashoffset: %.03f; }
@@ -273,6 +283,7 @@ def create_animation(filename):
                             pathname, animation_time))
 
             if GENERATE_JS_SVG:
+                assert js_animated_css
                 js_animated_css += d("""\n
                     /* stroke %s */""" % pathid)
                 
@@ -424,9 +435,7 @@ def create_animation(filename):
 
         # run svgexport
         cmdline = 'svgexport %s' % shescape(svgexport_datafile)
-        print(cmdline)
-        if os.system(cmdline) != 0:
-            exit('Error running external command')
+        run(cmdline)
 
         if DELETE_TEMPORARY_FILES:
             os.remove(svgexport_datafile)
@@ -451,9 +460,7 @@ def create_animation(filename):
                     shescape(pngframefiles[-1]),
                     bgopts,
                     shescape(giffile_tmp1))
-        print(cmdline)
-        if os.system(cmdline) != 0:
-            exit('Error running external command')
+        run(cmdline)
 
         if DELETE_TEMPORARY_FILES:
             for f in pngframefiles:
@@ -466,18 +473,14 @@ def create_animation(filename):
                    "-map mpr:cmap %s") % (
                     shescape(giffile_tmp1),
                     shescape(giffile_tmp2))
-        print(cmdline)
-        if os.system(cmdline) != 0:
-            exit('Error running external command')
+        run(cmdline)
         if DELETE_TEMPORARY_FILES:
             os.remove(giffile_tmp1)
 
         cmdline = ("gifsicle -O3 %s -o %s") % (
                     shescape(giffile_tmp2),
                     shescape(giffile))
-        print(cmdline)
-        if os.system(cmdline) != 0:
-            exit('Error running external command')
+        run(cmdline)
         if DELETE_TEMPORARY_FILES:
             os.remove(giffile_tmp2)
         
@@ -486,8 +489,7 @@ def create_animation(filename):
         f0insert = [bg_g, anim_g]
         if SHOW_BRUSH: f0insert += [brush_g, brush_brd_g]
         for g in f0insert:            
-            el = E.a()
-            el.set("data-stroke","0")
+            el = E.a({ "data-stroke": "0" })
             g.insert(0, el)
 
         for i in range(0, len(js_anim_els)):
