@@ -64,7 +64,7 @@ etree.register_namespace("xlink","http://www.w3.org/1999/xlink")
 parser = etree.XMLParser(remove_blank_text=True)
 
 def create_animation(filename):
-    print('processing %s' % filename)
+    print(('processing %s' % filename))
     filename_noext = re.sub(r'\.[^\.]+$','',filename)
     filename_noext_ascii = re.sub(r'\\([\\u])','\\1',
                             json.dumps(filename_noext))[1:-1]
@@ -395,7 +395,7 @@ def create_animation(filename):
         svgfile = filename_noext + '_anim.svg'
         doc.write(svgfile, pretty_print=True)
         doc.getroot().remove(style)
-        print 'written %s' % svgfile
+        print('written %s' % svgfile)
 
     if GENERATE_GIF:
         svgframefiles = []
@@ -414,17 +414,17 @@ def create_animation(filename):
             doc.getroot().insert(0, style)
             doc.write(svgframefile, pretty_print=True)
             doc.getroot().remove(style)
-            print 'written %s' % svgframefile
+            print('written %s' % svgframefile)
 
         # create json file
         svgexport_datafile = filename_noext_ascii+"_export_data.json"
         with open(svgexport_datafile,'w') as f:
             f.write(json.dumps(svgexport_data))
-        print 'created instructions %s' % svgexport_datafile
+        print('created instructions %s' % svgexport_datafile)
 
         # run svgexport
         cmdline = 'svgexport %s' % shescape(svgexport_datafile)
-        print cmdline
+        print(cmdline)
         if os.system(cmdline) != 0:
             exit('Error running external command')
 
@@ -451,14 +451,14 @@ def create_animation(filename):
                     shescape(pngframefiles[-1]),
                     bgopts,
                     shescape(giffile_tmp1))
-        print cmdline
+        print(cmdline)
         if os.system(cmdline) != 0:
             exit('Error running external command')
 
         if DELETE_TEMPORARY_FILES:
             for f in pngframefiles:
                 os.remove(f)
-            print 'cleaned up.'
+            print('cleaned up.')
 
         cmdline = ("convert %s \\( -clone 0--1 -background none "+
                    "+append -quantize transparent -colors 63 "+
@@ -466,7 +466,7 @@ def create_animation(filename):
                    "-map mpr:cmap %s") % (
                     shescape(giffile_tmp1),
                     shescape(giffile_tmp2))
-        print cmdline
+        print(cmdline)
         if os.system(cmdline) != 0:
             exit('Error running external command')
         if DELETE_TEMPORARY_FILES:
@@ -475,7 +475,7 @@ def create_animation(filename):
         cmdline = ("gifsicle -O3 %s -o %s") % (
                     shescape(giffile_tmp2),
                     shescape(giffile))
-        print cmdline
+        print(cmdline)
         if os.system(cmdline) != 0:
             exit('Error running external command')
         if DELETE_TEMPORARY_FILES:
@@ -503,7 +503,7 @@ def create_animation(filename):
         svgfile = filename_noext + '_js_anim.svg'
         doc.write(svgfile, pretty_print=True)
         doc.getroot().remove(style)
-        print 'written %s' % svgfile
+        print('written %s' % svgfile)
 
 if GENERATE_GIF and GIF_BACKGROUND_COLOR == 'transparent' and not GIF_ALLOW_TRANSPARENT:
     exit(d("""
