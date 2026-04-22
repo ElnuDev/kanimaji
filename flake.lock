@@ -1,0 +1,44 @@
+{
+  "nodes": {
+    "kanijvg": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1775218066,
+        "narHash": "sha256-iYv9xakgoGt/JwwdKDUCpSAF36hBtKlX9oN7xiLowjs=",
+        "owner": "KanjiVG",
+        "repo": "kanjivg",
+        "rev": "544d319f79348c092d567b662f27f33dacfa60cd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "KanjiVG",
+        "repo": "kanjivg",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1776548001,
+        "narHash": "sha256-ZSK0NL4a1BwVbbTBoSnWgbJy9HeZFXLYQizjb2DPF24=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "b12141ef619e0a9c1c84dc8c684040326f27cdcc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "kanijvg": "kanijvg",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
