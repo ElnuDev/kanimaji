@@ -2,3 +2,4 @@
 *.svg
 *.json
 .direnv
+result

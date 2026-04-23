@@ -1,6 +1,6 @@
 {
   "nodes": {
-    "kanijvg": {
+    "kanjivg": {
       "flake": false,
       "locked": {
         "lastModified": 1775218066,
@@ -34,7 +34,7 @@
     },
     "root": {
       "inputs": {
-        "kanijvg": "kanijvg",
+        "kanjivg": "kanjivg",
         "nixpkgs": "nixpkgs"
       }
     }
