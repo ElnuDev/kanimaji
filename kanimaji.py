@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # pyright: reportPossiblyUnboundVariable=warning
 
 import re, os, sys, json

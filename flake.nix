@@ -16,24 +16,18 @@
     };
   in {
     packages."${system}" = let
-      kanimaji =
+      generate =
         { stdenv
         , lib
-        , python3
-        , python3Packages
         , kanjiList ? null
         }:
         stdenv.mkDerivation {
-          name = "kanimaji";
-          buildInputs = [ python3 ] ++ (with python3Packages; [
-            lxml
-            svg-path
-            python-dotenv
-          ]);
+          name = "kanimaji-out";
           src = ./.;
           KANJI_LIST_FILE = if kanjiList == null
               then null
               else pkgs.writeText "kanji-list.txt" (lib.concatStringsSep "\n" kanjiList);
+          buildInputs = [ self.packages."${system}".kanimaji ];
           installPhase = ''
             mkdir -p $out
             export LC_ALL=C.UTF-8
@@ -67,7 +61,7 @@
             ln -s $src/.env .
             for svg in "''${TARGET_FILES[@]}"; do
               ln -s ${kanjivg}/kanji/$svg .
-              python $src/kanimaji.py $svg
+              kanimaji $svg
               rm $svg
             done
             rm .env
@@ -78,15 +72,33 @@
           GENERATE_JS_SVG = false;
         };
     in {
-      default = self.packages."${system}".all;
-      all = pkgs.callPackage kanimaji { };
-      custom = pkgs.callPackage kanimaji {
+      kanimaji = with pkgs; python3Packages.buildPythonApplication rec {
+        name = "kanimaji";
+        src = ./.;
+        dependencies = (with python3Packages; [
+          lxml
+          svg-path
+          python-dotenv
+        ]);
+        format = "other";
+        installPhase = ''
+          mkdir -p $out/bin
+          pushd $out/bin
+          cp $src/*.py .
+          cp $src/.env .
+          ln -s ${name}.py ${name}
+          popd
+        '';
+      };
+      default = self.packages."${system}".kanimaji;
+      all = pkgs.callPackage generate { };
+      custom = pkgs.callPackage generate {
         "kanjiList" = [ "日" "本" "位" "位-Kaisho" ];
       };
     };
     devShells."${system}".default = pkgs.mkShell {
-      inputsFrom = [ self.packages."${system}".default ];
-      packages = with pkgs.python314Packages; [
+      inputsFrom = [ self.packages."${system}".kanimaji ];
+      packages = with pkgs.python3Packages; [
         types-lxml # lxml type hints
         black # formatting
       ];
