@@ -667,12 +667,15 @@ def create_animation(filename):
                 os.remove(f)
             debug_print("cleaned up.")
 
+        # Create a small 1x1 image of your background color to force it into the palette
+        bg_color_hex = GIF_BACKGROUND_COLOR if GIF_BACKGROUND_COLOR != "transparent" else "white"
         cmdline = (
-            "magick %s \\( -clone 0--1 -background none "
-            + "+append -quantize transparent -colors 63 "
+            "magick %s "
+            + "\\( -clone 0--1 \\( -size 1x1 xc:%s \\) +append " # Add a pixel of your BG color here
+            + "-quantize transparent -colors 256 "           # Increased to 64 to account for the extra color
             + "-unique-colors -write mpr:cmap +delete \\) "
             + "-remap mpr:cmap %s"
-        ) % (shescape(giffile_tmp1), shescape(giffile_tmp2))
+        ) % (shescape(giffile_tmp1), bg_color_hex, shescape(giffile_tmp2))
         run(cmdline)
         if DELETE_TEMPORARY_FILES:
             os.remove(giffile_tmp1)

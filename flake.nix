@@ -104,6 +104,18 @@
             popd
           '';
         };
+      discord = let
+        stroke = "#5865f2"; # blurple
+      in {
+        GENERATE_SVG = false;
+        GENERATE_JS_SVG = false;
+        GIF_SIZE = 250;
+        GIF_BACKGROUND_COLOR = "#1b1b1d"; # Discord background color (dark)
+        STROKE_UNFILLED_COLOR = "#000";
+        STROKE_FILLING_COLOR = stroke;
+        STROKE_FILLED_COLOR = "#eee";
+        BRUSH_COLOR = stroke;
+      };
     in {
       kanimaji = pkgs.callPackage kanimaji { };
       default = self.packages."${system}".kanimaji;
@@ -111,6 +123,10 @@
       custom = pkgs.callPackage generate {
         "kanjiList" = [ "日" "本" "位" "位-Kaisho" ];
       };
+      allDiscord = (pkgs.callPackage generate { }).overrideAttrs (final: prev: discord);
+      customDiscord = (pkgs.callPackage generate {
+        "kanjiList" = [ "語" ];
+      }).overrideAttrs (final: prev: discord);
     };
     devShells."${system}".default = pkgs.mkShell {
       inputsFrom = [ self.packages."${system}".kanimaji ];
