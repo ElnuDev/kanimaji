@@ -16,6 +16,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def bool_flag(key):
+    return os.environ.get(key) and os.environ[key] != "0"
+
 STROKE_BORDER_WIDTH = float(os.environ["STROKE_BORDER_WIDTH"])
 STROKE_BORDER_COLOR = os.environ["STROKE_BORDER_COLOR"]
 STROKE_UNFILLED_COLOR = os.environ["STROKE_UNFILLED_COLOR"]
@@ -24,24 +27,28 @@ STROKE_FILLING_COLOR = os.environ["STROKE_FILLING_COLOR"]
 STROKE_FILLED_COLOR = os.environ["STROKE_FILLED_COLOR"]
 STROKE_FILLED_WIDTH = float(os.environ["STROKE_FILLED_WIDTH"])
 
-SHOW_BRUSH = bool(os.environ["SHOW_BRUSH"])
-SHOW_BRUSH_FRONT_BORDER = bool(os.environ["SHOW_BRUSH_FRONT_BORDER"])
+SHOW_BRUSH = bool_flag("SHOW_BRUSH")
+SHOW_BRUSH_FRONT_BORDER = bool_flag("SHOW_BRUSH_FRONT_BORDER")
 BRUSH_COLOR = os.environ["BRUSH_COLOR"]
 BRUSH_WIDTH = float(os.environ["BRUSH_WIDTH"])
 BRUSH_BORDER_COLOR = os.environ["BRUSH_BORDER_COLOR"]
 BRUSH_BORDER_WIDTH = float(os.environ["BRUSH_BORDER_WIDTH"])
 
+SHOW_STROKE_NUMBERS = bool_flag("SHOW_STROKE_NUMBERS")
+STROKE_NUMBERS_COLOR = os.environ["STROKE_NUMBERS_COLOR"]
+STROKE_NUMBERS_FONT = os.environ["STROKE_NUMBERS_FONT"]
+
 WAIT_AFTER = float(os.environ["WAIT_AFTER"])
 
-DELETE_TEMPORARY_FILES = bool(os.environ["DELETE_TEMPORARY_FILES"])
+DELETE_TEMPORARY_FILES = bool_flag(os.environ["DELETE_TEMPORARY_FILES"])
 GIF_SIZE = int(os.environ["GIF_SIZE"])
 GIF_FRAME_DURATION = float(os.environ["GIF_FRAME_DURATION"])
 GIF_BACKGROUND_COLOR = os.environ["GIF_BACKGROUND_COLOR"]
-GIF_ALLOW_TRANSPARENT = bool(os.environ["GIF_ALLOW_TRANSPARENT"])
+GIF_ALLOW_TRANSPARENT = bool_flag("GIF_ALLOW_TRANSPARENT")
 
-GENERATE_SVG = bool(os.environ["GENERATE_SVG"])
-GENERATE_JS_SVG = bool(os.environ["GENERATE_JS_SVG"])
-GENERATE_GIF = bool(os.environ["GENERATE_GIF"])
+GENERATE_SVG = bool_flag("GENERATE_SVG")
+GENERATE_JS_SVG = bool_flag("GENERATE_JS_SVG")
+GENERATE_GIF = bool_flag("GENERATE_GIF")
 
 STROKE_LENGTH_TO_DURATION = compile(os.environ["STROKE_LENGTH_TO_DURATION"], "<string>", "eval")
 def stroke_length_to_duration(length):
@@ -223,22 +230,25 @@ def create_animation(filename):
     for g in doc.xpath("/n:svg/n:g", namespaces=namespaces):
         groupid = g.get("id")
         if re.match(r"^kvg:StrokeNumbers_", groupid):
-            rule = d(
-                """
-                #%s {
-                    display: none;
-                }"""
-                % re.sub(r":", "\\\\3a ", groupid)
-            )
-            if GENERATE_SVG:
-                assert animated_css
-                animated_css += rule
-            if GENERATE_JS_SVG:
-                assert js_animated_css
-                js_animated_css += rule
-            if GENERATE_GIF:
-                for k in static_css:
-                    static_css[k] += rule
+            if SHOW_STROKE_NUMBERS:
+                g.set("style", f"font-family:'{STROKE_NUMBERS_FONT}';font-size:8px;fill:{STROKE_NUMBERS_COLOR}")
+            else:
+                rule = d(
+                    """
+                    #%s {
+                        display: none;
+                    }"""
+                    % re.sub(r":", "\\\\3a ", groupid)
+                )
+                if GENERATE_SVG:
+                    assert animated_css
+                    animated_css += rule
+                if GENERATE_JS_SVG:
+                    assert js_animated_css
+                    js_animated_css += rule
+                if GENERATE_GIF:
+                    for k in static_css:
+                        static_css[k] += rule
             continue
 
         gidcss = re.sub(r":", "\\\\3a ", groupid)
