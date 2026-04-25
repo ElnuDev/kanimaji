@@ -14,7 +14,6 @@
     pkgs = import nixpkgs {
       inherit system;
     };
-    lib = pkgs.lib;
   in {
     packages."${system}" = let
       kanimaji =
@@ -50,6 +49,7 @@
       generate =
         { stdenv
         , lib
+        , makeFontsConf
         , kanjiList ? null
         }:
         stdenv.mkDerivation {
@@ -59,9 +59,11 @@
               then null
               else pkgs.writeText "kanji-list.txt" (lib.concatStringsSep "\n" kanjiList);
           buildInputs = [ self.packages."${system}".kanimaji ];
+          FONTCONFIG_FILE = makeFontsConf { fontDirectories = [ ]; };
           installPhase = ''
             mkdir -p $out
             export LC_ALL=C.UTF-8
+            export XDG_CACHE_HOME="$(mktemp -d)"
 
             if [ -z "$KANJI_LIST_FILE" ]; then
               echo "Processing all kanji..."
