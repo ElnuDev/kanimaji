@@ -635,7 +635,7 @@ def create_animation(filename):
             input_svg = frame["input"][0]
             output_png = frame["output"][0][0]
             dimension = GIF_SIZE
-            cmdline = f"cairosvg --width {dimension} --height {dimension} {input_svg} -o {output_png}"
+            cmdline = f"cairosvg --output-width {dimension} --output-height {dimension} {input_svg} -o {output_png}"
             run(cmdline)
             if DELETE_TEMPORARY_FILES:
                 os.remove(input_svg)
