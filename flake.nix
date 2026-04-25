@@ -92,9 +92,12 @@
 
             pushd $out
             ln -s $src/.env .
+            COUNTER=0
             for svg in "''${TARGET_FILES[@]}"; do
+              COUNTER=$((COUNTER + 1))
+              echo "Processing $COUNTER/''${#TARGET_FILES[@]} ($svg)..."
               ln -s ${kanjivg}/kanji/$svg .
-              kanimaji $svg
+              kanimaji $svg > /dev/null
               rm $svg
             done
             rm .env

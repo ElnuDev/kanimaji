@@ -16,8 +16,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def debug_print(msg):
+    if DEBUG:
+        print(msg)
+
 def bool_flag(key):
     return os.environ.get(key) and os.environ[key] != "0"
+
+DEBUG = bool_flag("DEBUG")
 
 STROKE_BORDER_WIDTH = float(os.environ["STROKE_BORDER_WIDTH"])
 STROKE_BORDER_COLOR = os.environ["STROKE_BORDER_COLOR"]
@@ -62,7 +68,7 @@ TIMING_FUNCTION = os.environ["TIMING_FUNCTION"]
 
 
 def run(cmdline):
-    print(cmdline)
+    debug_print(cmdline)
     if subprocess.run(cmdline, shell=True).returncode != 0:
         exit("Error running external command")
 
@@ -128,7 +134,7 @@ parser = etree.XMLParser(remove_blank_text=True)
 
 
 def create_animation(filename):
-    print(("processing %s" % filename))
+    debug_print(("processing %s" % filename))
     filename_noext = re.sub(r"\.[^\.]+$", "", filename)
     filename_noext_ascii = re.sub(r"\\([\\u])", "\\1", json.dumps(filename_noext))[1:-1]
     baseid = basename(filename_noext_ascii)
@@ -592,7 +598,7 @@ def create_animation(filename):
         svgfile = filename_noext + "_anim.svg"
         doc.write(svgfile, pretty_print=True)
         doc.getroot().remove(style)
-        print("written %s" % svgfile)
+        debug_print("written %s" % svgfile)
 
     if GENERATE_GIF:
         svgframefiles = []
@@ -623,7 +629,7 @@ def create_animation(filename):
             with open(svgframefile, 'w', encoding='utf-8') as file:
                 file.write(new_content)
 
-            print("written %s" % svgframefile)
+            debug_print("written %s" % svgframefile)
 
         for frame in svgexport_data:
             input_svg = frame["input"][0]
@@ -659,7 +665,7 @@ def create_animation(filename):
         if DELETE_TEMPORARY_FILES:
             for f in pngframefiles:
                 os.remove(f)
-            print("cleaned up.")
+            debug_print("cleaned up.")
 
         cmdline = (
             "magick %s \\( -clone 0--1 -background none "
@@ -701,7 +707,7 @@ def create_animation(filename):
         svgfile = filename_noext + "_js_anim.svg"
         doc.write(svgfile, pretty_print=True)
         doc.getroot().remove(style)
-        print("written %s" % svgfile)
+        debug_print("written %s" % svgfile)
 
 
 if GENERATE_GIF and GIF_BACKGROUND_COLOR == "transparent" and not GIF_ALLOW_TRANSPARENT:
@@ -719,5 +725,6 @@ if GENERATE_GIF and GIF_BACKGROUND_COLOR == "transparent" and not GIF_ALLOW_TRAN
 
 args = deepcopy(sys.argv)
 del args[0]
-for a in args:
+for i, a in enumerate(args):
+    print(f"Processing {i + 1}/{len(args)} ({a})...")
     create_animation(a)
