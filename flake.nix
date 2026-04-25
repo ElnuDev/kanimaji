@@ -67,9 +67,6 @@
             rm .env
             popd
           '';
-
-          GENERATE_GIF = false;
-          GENERATE_JS_SVG = false;
         };
     in {
       kanimaji = with pkgs; python3Packages.buildPythonApplication rec {
