@@ -1,5 +1,6 @@
 *.pyc
 *.svg
 *.json
+*.gif
 .direnv
 result

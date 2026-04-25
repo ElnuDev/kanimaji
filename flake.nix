@@ -14,8 +14,39 @@
     pkgs = import nixpkgs {
       inherit system;
     };
+    lib = pkgs.lib;
   in {
     packages."${system}" = let
+      kanimaji =
+        { lib
+        , python3Packages
+        , cairosvg
+        , imagemagick
+        , gifsicle
+        , gifSupport ? true
+        }:
+        python3Packages.buildPythonApplication rec {
+          name = "kanimaji";
+          src = ./.;
+          dependencies = (with python3Packages; [
+            lxml
+            svg-path
+            python-dotenv
+          ]) ++ lib.optionals gifSupport [
+            cairosvg
+            imagemagick
+            gifsicle
+          ];
+          format = "other";
+          installPhase = ''
+            mkdir -p $out/bin
+            pushd $out/bin
+            cp $src/*.py .
+            cp $src/.env .
+            ln -s ${name}.py ${name}
+            popd
+          '';
+        };
       generate =
         { stdenv
         , lib
@@ -69,24 +100,7 @@
           '';
         };
     in {
-      kanimaji = with pkgs; python3Packages.buildPythonApplication rec {
-        name = "kanimaji";
-        src = ./.;
-        dependencies = (with python3Packages; [
-          lxml
-          svg-path
-          python-dotenv
-        ]);
-        format = "other";
-        installPhase = ''
-          mkdir -p $out/bin
-          pushd $out/bin
-          cp $src/*.py .
-          cp $src/.env .
-          ln -s ${name}.py ${name}
-          popd
-        '';
-      };
+      kanimaji = pkgs.callPackage kanimaji { };
       default = self.packages."${system}".kanimaji;
       all = pkgs.callPackage generate { };
       custom = pkgs.callPackage generate {

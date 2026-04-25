@@ -5,7 +5,7 @@
 import re, os, sys, json
 from lxml import etree
 from lxml.builder import E
-from svg.path import parse_path
+from svg.path import Path, parse_path
 from os.path import basename, abspath
 from copy import deepcopy
 from textwrap import dedent as d
@@ -40,7 +40,7 @@ STROKE_NUMBERS_FONT = os.environ["STROKE_NUMBERS_FONT"]
 
 WAIT_AFTER = float(os.environ["WAIT_AFTER"])
 
-DELETE_TEMPORARY_FILES = bool_flag(os.environ["DELETE_TEMPORARY_FILES"])
+DELETE_TEMPORARY_FILES = bool_flag("DELETE_TEMPORARY_FILES")
 GIF_SIZE = int(os.environ["GIF_SIZE"])
 GIF_FRAME_DURATION = float(os.environ["GIF_FRAME_DURATION"])
 GIF_BACKGROUND_COLOR = os.environ["GIF_BACKGROUND_COLOR"]
@@ -614,22 +614,25 @@ def create_animation(filename):
             doc.getroot().insert(0, style)
             doc.write(svgframefile, pretty_print=True)
             doc.getroot().remove(style)
+
+            # fixes for simplecss
+            with open(svgframefile, 'r', encoding='utf-8') as file:
+                content = file.read()
+            new_content = content.replace('kvg:', 'kvg-').replace("\\3a ", "-") 
+            new_content = content
+            with open(svgframefile, 'w', encoding='utf-8') as file:
+                file.write(new_content)
+
             print("written %s" % svgframefile)
 
-        # create json file
-        svgexport_datafile = filename_noext_ascii + "_export_data.json"
-        with open(svgexport_datafile, "w") as f:
-            f.write(json.dumps(svgexport_data))
-        print("created instructions %s" % svgexport_datafile)
-
-        # run svgexport
-        cmdline = "svgexport %s" % shescape(svgexport_datafile)
-        run(cmdline)
-
-        if DELETE_TEMPORARY_FILES:
-            os.remove(svgexport_datafile)
-            for f in svgframefiles:
-                os.remove(f)
+        for frame in svgexport_data:
+            input_svg = frame["input"][0]
+            output_png = frame["output"][0][0]
+            dimension = GIF_SIZE
+            cmdline = f"cairosvg --width {dimension} --height {dimension} {input_svg} -o {output_png}"
+            run(cmdline)
+            if DELETE_TEMPORARY_FILES:
+                os.remove(input_svg)
 
         # generate GIF
         giffile_tmp1 = filename_noext + "_anim_tmp1.gif"
@@ -642,7 +645,7 @@ def create_animation(filename):
         else:
             bgopts = "-background '%s' -alpha remove" % GIF_BACKGROUND_COLOR
         cmdline = (
-            "convert -delay %d %s -delay %d %s " + "%s -layers OptimizePlus %s"
+            "magick -delay %d %s -delay %d %s " + "%s -layers OptimizePlus %s"
         ) % (
             int(GIF_FRAME_DURATION * 100),
             escpngframefiles,
@@ -659,10 +662,10 @@ def create_animation(filename):
             print("cleaned up.")
 
         cmdline = (
-            "convert %s \\( -clone 0--1 -background none "
+            "magick %s \\( -clone 0--1 -background none "
             + "+append -quantize transparent -colors 63 "
             + "-unique-colors -write mpr:cmap +delete \\) "
-            + "-map mpr:cmap %s"
+            + "-remap mpr:cmap %s"
         ) % (shescape(giffile_tmp1), shescape(giffile_tmp2))
         run(cmdline)
         if DELETE_TEMPORARY_FILES:
