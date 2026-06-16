@@ -49,15 +49,46 @@ GRID_COLOR = os.environ["GRID_COLOR"]
 
 WAIT_AFTER = float(os.environ["WAIT_AFTER"])
 
+# How long the final (completed) frame is held before the GIF/WebP loops.
+FINAL_FRAME_HOLD = float(os.environ["FINAL_FRAME_HOLD"])
+
 DELETE_TEMPORARY_FILES = bool_flag("DELETE_TEMPORARY_FILES")
 GIF_SIZE = int(os.environ["GIF_SIZE"])
 GIF_FRAME_DURATION = float(os.environ["GIF_FRAME_DURATION"])
 GIF_BACKGROUND_COLOR = os.environ["GIF_BACKGROUND_COLOR"]
 GIF_ALLOW_TRANSPARENT = bool_flag("GIF_ALLOW_TRANSPARENT")
+# Show the completed glyph once up front, so static/first-paint viewers see it.
+GIF_POSTER_FINAL_FRAME = bool_flag("GIF_POSTER_FINAL_FRAME")
+
+WEBP_SIZE = int(os.environ["WEBP_SIZE"])
+WEBP_BACKGROUND_COLOR = os.environ["WEBP_BACKGROUND_COLOR"]
+# 100 = lossless, anything lower is used as the lossy quality level.
+WEBP_QUALITY = int(os.environ["WEBP_QUALITY"])
+WEBP_POSTER_FINAL_FRAME = bool_flag("WEBP_POSTER_FINAL_FRAME")
 
 GENERATE_SVG = bool_flag("GENERATE_SVG")
 GENERATE_JS_SVG = bool_flag("GENERATE_JS_SVG")
 GENERATE_GIF = bool_flag("GENERATE_GIF")
+GENERATE_WEBP = bool_flag("GENERATE_WEBP")
+
+
+def color_has_alpha(c):
+    c = c.strip().strip("\"'").strip().lower()
+    if c == "transparent":
+        return True
+    m = re.fullmatch(r"#[0-9a-f]{8}", c)  # #rrggbbaa
+    if m:
+        return int(c[-2:], 16) < 255
+    m = re.fullmatch(r"rgba\([^)]*,\s*([0-9.]+)\s*\)", c)  # rgba(...)
+    if m:
+        return float(m.group(1)) < 1.0
+    return False
+
+
+# WebP keeps an 8-bit transparent background (frames rendered as-is) when the
+# configured color is "transparent" or carries a non-opaque alpha channel;
+# otherwise frames are rendered onto the solid color and store no real alpha.
+WEBP_TRANSPARENT = color_has_alpha(WEBP_BACKGROUND_COLOR)
 
 STROKE_LENGTH_TO_DURATION = compile(os.environ["STROKE_LENGTH_TO_DURATION"], "<string>", "eval")
 def stroke_length_to_duration(length):
@@ -271,12 +302,12 @@ def create_animation(filename):
         )
         js_anim_els = []  # collect the ids of animating elements
         js_anim_time = []  # the time set (as default) for each animation
-    if GENERATE_GIF:
+    if GENERATE_GIF or GENERATE_WEBP:
         static_css = {}
         last_frame_index = int(actual_animation_time / GIF_FRAME_DURATION) + 1
         for i in range(0, last_frame_index + 1):
             static_css[i] = css_header
-        last_frame_delay = animation_time - last_frame_index * GIF_FRAME_DURATION
+        last_frame_delay = FINAL_FRAME_HOLD
     elapsedlen = 0
     elapsedtime = 0
 
@@ -300,7 +331,7 @@ def create_animation(filename):
                 if GENERATE_JS_SVG:
                     assert js_animated_css
                     js_animated_css += rule
-                if GENERATE_GIF:
+                if GENERATE_GIF or GENERATE_WEBP:
                     for k in static_css:
                         static_css[k] += rule
             continue
@@ -320,7 +351,7 @@ def create_animation(filename):
         if GENERATE_JS_SVG:
             assert js_animated_css
             js_animated_css += rule
-        if GENERATE_GIF:
+        if GENERATE_GIF or GENERATE_WEBP:
             for k in static_css:
                 static_css[k] += rule
 
@@ -551,7 +582,7 @@ def create_animation(filename):
                         )
                     )
 
-            if GENERATE_GIF:
+            if GENERATE_GIF or GENERATE_WEBP:
                 for k in static_css:
                     time = k * GIF_FRAME_DURATION
                     reltime = time * tottime / animation_time  # unscaled time
@@ -698,9 +729,17 @@ def create_animation(filename):
             bgopts = "-dispose previous"
         else:
             bgopts = "-background '%s' -alpha remove" % GIF_BACKGROUND_COLOR
+        # Optionally lead with the completed glyph as a poster frame.
+        poster = ""
+        if GIF_POSTER_FINAL_FRAME:
+            poster = "-delay %d %s " % (
+                int(FINAL_FRAME_HOLD * 100),
+                shescape(pngframefiles[-1]),
+            )
         cmdline = (
-            "magick -delay %d %s -delay %d %s " + "%s -layers OptimizePlus %s"
+            "magick %s-delay %d %s -delay %d %s " + "%s -layers OptimizePlus %s"
         ) % (
+            poster,
             int(GIF_FRAME_DURATION * 100),
             escpngframefiles,
             int(last_frame_delay * 100),
@@ -735,6 +774,53 @@ def create_animation(filename):
         run(cmdline)
         if DELETE_TEMPORARY_FILES:
             os.remove(giffile_tmp2)
+
+    if GENERATE_WEBP:
+        svgframefiles = []
+        pngframefiles = []
+        for k in static_css:
+            svgframefile = filename_noext_ascii + ("_webpframe%04d.svg" % k)
+            pngframefile = filename_noext_ascii + ("_webpframe%04d.png" % k)
+            svgframefiles.append(svgframefile)
+            pngframefiles.append(pngframefile)
+
+            style = E.style(static_css[k], id="style-Kanimaji")
+            doc.getroot().insert(0, style)
+            doc.write(svgframefile, pretty_print=True)
+            doc.getroot().remove(style)
+
+        # Render frames. A solid (opaque) background is baked in here so the PNGs
+        # carry no real alpha; a transparent background keeps the frames' 8-bit alpha.
+        bgopt = "" if WEBP_TRANSPARENT else "--background %s" % shescape(WEBP_BACKGROUND_COLOR)
+        for svgf, pngf in zip(svgframefiles, pngframefiles):
+            cmdline = "cairosvg --output-width %d --output-height %d %s %s -o %s" % (
+                WEBP_SIZE, WEBP_SIZE, bgopt, shescape(abspath(svgf)), shescape(abspath(pngf))
+            )
+            run(cmdline)
+            if DELETE_TEMPORARY_FILES:
+                os.remove(svgf)
+
+        # WEBP_QUALITY 100 -> lossless, otherwise lossy at that quality level.
+        qualopt = "-lossless" if WEBP_QUALITY >= 100 else "-lossy -q %d" % WEBP_QUALITY
+        nframes = len(pngframefiles)
+        frame_args = []
+        # Optionally lead with the completed glyph as a poster frame.
+        if WEBP_POSTER_FINAL_FRAME:
+            frame_args.append(
+                "-d %d %s" % (int(FINAL_FRAME_HOLD * 1000), shescape(pngframefiles[-1]))
+            )
+        for i, pngf in enumerate(pngframefiles):
+            dur = last_frame_delay if i == nframes - 1 else GIF_FRAME_DURATION
+            frame_args.append("-d %d %s" % (int(dur * 1000), shescape(pngf)))
+        webpfile = filename_noext + "_anim.webp"
+        cmdline = "img2webp -loop 0 %s -m 6 %s -o %s" % (
+            qualopt, " ".join(frame_args), shescape(webpfile)
+        )
+        run(cmdline)
+        if DELETE_TEMPORARY_FILES:
+            for f in pngframefiles:
+                os.remove(f)
+        debug_print("written %s" % webpfile)
 
     if GENERATE_JS_SVG:
 

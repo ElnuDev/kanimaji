@@ -22,6 +22,7 @@
         , cairosvg
         , imagemagick
         , gifsicle
+        , libwebp
         , gifSupport ? true
         }:
         python3Packages.buildPythonApplication rec {
@@ -35,6 +36,7 @@
             cairosvg
             imagemagick
             gifsicle
+            libwebp
           ];
           format = "other";
           installPhase = ''
@@ -109,9 +111,10 @@
       in {
         GENERATE_SVG = false;
         GENERATE_JS_SVG = false;
-        GENERATE_GIF = true;
-        GIF_SIZE = 1024;
-        GIF_BACKGROUND_COLOR = "#1b1b1d"; # Discord background color (dark)
+        GENERATE_GIF = false;
+        GENERATE_WEBP = true;
+        WEBP_SIZE = 1024;
+        WEBP_BACKGROUND_COLOR = "transparent"; # no background, adapts to Discord theme
         STROKE_UNFILLED_COLOR = "#000";
         STROKE_FILLING_COLOR = stroke;
         STROKE_FILLED_COLOR = "#eee";
