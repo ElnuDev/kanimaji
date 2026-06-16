@@ -115,6 +115,7 @@
         GENERATE_WEBP = true;
         WEBP_SIZE = 1024;
         WEBP_BACKGROUND_COLOR = "transparent"; # no background, adapts to Discord theme
+        WEBP_POSTER_FINAL_FRAME = true; # lead with the completed glyph (static fallback)
         STROKE_UNFILLED_COLOR = "#000";
         STROKE_FILLING_COLOR = stroke;
         STROKE_FILLED_COLOR = "#eee";
