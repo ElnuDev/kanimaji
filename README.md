@@ -23,13 +23,17 @@ See the [Demo on the Project Page](http://maurimo.github.io/kanimaji/index.html)
 ## Dependencies ##
 
 Kanimaji depends on
- * [Python 2.7]() with lxml support.
+ * [Python 3]() with lxml support.
  * [svg.path](https://pypi.python.org/pypi/svg.path) Python library, for approximating path lengths.
+ * [python-dotenv](https://pypi.org/project/python-dotenv/), for loading settings from `.env`.
 
 If you want to be able to generate animated GIF, you will also need:
- * [svgexport](https://github.com/shakiba/svgexport) Python library, for exporting SVG to PNG.
- * [ImageMagick](www.imagemagick.org)'s convert program to merge PNG's into a GIF.
+ * [CairoSVG](https://cairosvg.org/) for rendering SVG frames to PNG.
+ * [ImageMagick](www.imagemagick.org)'s magick program to merge PNG's into a GIF.
  * [Gifsicle](https://www.lcdf.org/gifsicle/) to optimize GIF size.
+
+A [Nix](https://nixos.org/) flake is also provided; `nix develop` gives a shell with all
+dependencies, and `nix build` can render kanji in batch (see `flake.nix`).
 
 ## Usage ##
 
@@ -41,7 +45,7 @@ where the files are KanjiVG SVG files (could work with other SVG files, but it h
 
 ## Settings ##
 
-Just edit the settings.py file, all settings are explained there. In this file you can also enable/disable SVG, GIF, JS-SVG generation.
+Just edit the `.env` file, all settings are explained there. In this file you can also enable/disable SVG, GIF, JS-SVG generation.
 
 ## License ##
 
