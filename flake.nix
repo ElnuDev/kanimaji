@@ -94,14 +94,20 @@
 
             pushd $out
             ln -s $src/.env .
-            COUNTER=0
-            for svg in "''${TARGET_FILES[@]}"; do
-              COUNTER=$((COUNTER + 1))
-              echo "Processing $COUNTER/''${#TARGET_FILES[@]} ($svg)..."
-              ln -s ${kanjivg}/kanji/$svg .
-              kanimaji $svg > /dev/null
-              rm $svg
-            done
+            JOBS="''${NIX_BUILD_CORES:-0}"
+            if ! [ "$JOBS" -gt 0 ] 2>/dev/null; then JOBS="$(nproc)"; fi
+            echo "Processing ''${#TARGET_FILES[@]} kanji with $JOBS parallel workers..."
+            # Each kanji is an independent process. Frame files are uniquely named
+            # per input and deleted once its webp/gif is compiled
+            # (DELETE_TEMPORARY_FILES), so the on-disk/in-flight working set stays
+            # bounded to the active workers regardless of dataset size.
+            printf '%s\n' "''${TARGET_FILES[@]}" | xargs -P "$JOBS" -I{} bash -c '
+              svg="$1"
+              echo "  $svg"
+              ln -sf ${kanjivg}/kanji/"$svg" "$svg"
+              kanimaji "$svg" > /dev/null
+              rm -f "$svg"
+            ' _ {}
             rm .env
             popd
           '';
