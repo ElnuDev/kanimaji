@@ -2,7 +2,7 @@
 
 ## Generation of animations ##
 
-This is a small utility for transforming KanjiVG images into animated SVG or GIF files, or SVGs that can easily animated via Javascript (with no library dependency!).
+This is a small utility for transforming KanjiVG images into animated SVG, GIF, or WebP files, or SVGs that can easily animated via Javascript (with no library dependency!).
 
  * SVG samples (animated via CSS, no SMIL/<animate> element):
 
@@ -27,13 +27,16 @@ Kanimaji depends on
  * [svg.path](https://pypi.python.org/pypi/svg.path) Python library, for approximating path lengths.
  * [python-dotenv](https://pypi.org/project/python-dotenv/), for loading settings from `.env`.
 
-If you want to be able to generate animated GIF, you will also need:
+If you want to be able to generate animated GIF or WebP, you will also need:
  * [CairoSVG](https://cairosvg.org/) for rendering SVG frames to PNG.
  * [ImageMagick](www.imagemagick.org)'s magick program to merge PNG's into a GIF.
  * [Gifsicle](https://www.lcdf.org/gifsicle/) to optimize GIF size.
+ * [libwebp](https://developers.google.com/speed/webp)'s `img2webp` to assemble the animated WebP.
 
 A [Nix](https://nixos.org/) flake is also provided; `nix develop` gives a shell with all
-dependencies, and `nix build` can render kanji in batch (see `flake.nix`).
+dependencies, and `nix build` can render kanji in batch (see `flake.nix`). The batch renderer runs
+in parallel across CPU cores — pass `--cores 0` to use all of them (the full ~11k KanjiVG set is a
+multi-day job single-core).
 
 ## Usage ##
 
@@ -45,7 +48,7 @@ where the files are KanjiVG SVG files (could work with other SVG files, but it h
 
 ## Settings ##
 
-Just edit the `.env` file, all settings are explained there. In this file you can also enable/disable SVG, GIF, JS-SVG generation.
+Just edit the `.env` file, all settings are explained there. In this file you can also enable/disable SVG, GIF, JS-SVG, and WebP generation.
 
 ## License ##
 
