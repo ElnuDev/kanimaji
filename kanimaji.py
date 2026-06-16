@@ -638,7 +638,13 @@ def create_animation(filename):
                             % (
                                 anim_pathidcss,
                                 pathlen,
-                                pathlen + 0.002,
+                                # Gap must comfortably exceed the path's true
+                                # geometric length (which cairosvg dashes along,
+                                # and can differ from the rounded compute_path_len)
+                                # so the pattern never wraps and paints a stray
+                                # sliver of highlight at the stroke's end on its
+                                # first frame.
+                                pathlen + 1,
                                 pathlen * (1 - progression) + 0.0015,
                                 STROKE_FILLING_COLOR,
                             )
