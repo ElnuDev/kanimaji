@@ -109,7 +109,8 @@
       in {
         GENERATE_SVG = false;
         GENERATE_JS_SVG = false;
-        GIF_SIZE = 250;
+        GENERATE_GIF = true;
+        GIF_SIZE = 1024;
         GIF_BACKGROUND_COLOR = "#1b1b1d"; # Discord background color (dark)
         STROKE_UNFILLED_COLOR = "#000";
         STROKE_FILLING_COLOR = stroke;
