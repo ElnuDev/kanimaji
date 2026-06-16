@@ -44,6 +44,9 @@ SHOW_STROKE_NUMBERS = bool_flag("SHOW_STROKE_NUMBERS")
 STROKE_NUMBERS_COLOR = os.environ["STROKE_NUMBERS_COLOR"]
 STROKE_NUMBERS_FONT = os.environ["STROKE_NUMBERS_FONT"]
 
+SHOW_GRID = bool_flag("SHOW_GRID")
+GRID_COLOR = os.environ["GRID_COLOR"]
+
 WAIT_AFTER = float(os.environ["WAIT_AFTER"])
 
 DELETE_TEMPORARY_FILES = bool_flag("DELETE_TEMPORARY_FILES")
@@ -170,6 +173,51 @@ def create_animation(filename):
         )
         % (STROKE_FILLED_COLOR, STROKE_FILLED_WIDTH),
     )
+
+    # Create the background grid if enabled
+    if SHOW_GRID:
+        # Updated Grid Logic with Clipping Fix
+        grid_style = (
+            f"fill:none;stroke:{GRID_COLOR};stroke-linecap:round;"
+            f"stroke-linejoin:round;opacity:0.25;"
+        )
+
+        # Stroke weights
+        THICK_W = 1.2
+        THIN_W = 0.8
+        OFFSET = THICK_W / 2  # Offset to prevent clipping on the edges
+
+        grid_group = E.g(id="kvg:BackgroundGrid-Kanimaji", style=grid_style)
+
+        # 1. Main Cross + Border (Thicker)
+        main_lines = E.g(id="kvg:GridMain-Kanimaji", style=f"stroke-width:{THICK_W};")
+        # Outer Border (nudge coordinates by OFFSET)
+        main_lines.append(E.line(x1=str(OFFSET), y1=str(OFFSET), x2=str(109-OFFSET), y2=str(OFFSET)))      # Top
+        main_lines.append(E.line(x1=str(OFFSET), y1=str(109-OFFSET), x2=str(109-OFFSET), y2=str(109-OFFSET)))  # Bottom
+        main_lines.append(E.line(x1=str(OFFSET), y1=str(OFFSET), x2=str(OFFSET), y2=str(109-OFFSET)))      # Left
+        main_lines.append(E.line(x1=str(109-OFFSET), y1=str(OFFSET), x2=str(109-OFFSET), y2=str(109-OFFSET)))  # Right
+        # Central Cross
+        main_lines.append(E.line(x1="54.5", y1="0", x2="54.5", y2="109"))
+        main_lines.append(E.line(x1="0", y1="54.5", x2="109", y2="54.5"))
+        grid_group.append(main_lines)
+
+        # 2. Subdivisions (Solid but Thinner)
+        subs_group = E.g(id="kvg:GridSubdivisions-Kanimaji", style=f"stroke-width:{THIN_W};")
+        subs_group.append(E.line(x1="27.25", y1="0", x2="27.25", y2="109"))
+        subs_group.append(E.line(x1="81.75", y1="0", x2="81.75" ,y2="109"))
+        subs_group.append(E.line(x1="0", y1="27.25", x2="109", y2="27.25"))
+        subs_group.append(E.line(x1="0", y1="81.75", x2="109", y2="81.75"))
+        grid_group.append(subs_group)
+
+        # 3. Diagonal Cross (Dotted)
+        dot_style = f"stroke-width:{THIN_W};stroke-dasharray:0, 2.5;"
+        dots_group = E.g(id="kvg:GridDots-Kanimaji", style=dot_style)
+        dots_group.append(E.line(x1="0", y1="0", x2="109", y2="109"))
+        dots_group.append(E.line(x1="109", y1="0", x2="0", y2="109"))
+        grid_group.append(dots_group)
+
+        doc.getroot().insert(0, grid_group)
+
     if SHOW_BRUSH:
         brush_g = E.g(
             id="kvg:" + baseid + "-brush-Kanimaji",
